@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Network Manager</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --success: #10b981;
+      --dark: #1e2937;
+      --light: #f8fafc;
+    }
+
+    body {
+      background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #1e2937;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+    }
+
+    .page-header {
+      margin-bottom: 2.5rem;
+    }
+
+    .page-title {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #1e2937, var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Elegant Cards */
+    .card {
+      border: none;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.1);
+      transition: all 0.3s ease;
+      background: white;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px -15px rgba(59, 130, 246, 0.15);
+    }
+
+    .info-card {
+      padding: 1.75rem;
+      height: 100%;
+      position: relative;
+    }
+
+    .info-icon {
+      font-size: 2.2rem;
+      color: var(--primary);
+      opacity: 0.9;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      margin-bottom: 0.4rem;
+    }
+
+    .info-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--dark);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Device Grid */
+    .device-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .device-card {
+      padding: 1.25rem;
+      border-radius: 16px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+
+    .device-card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.1);
+    }
+
+    .hostname {
+      font-weight: 600;
+      color: var(--dark);
+      font-size: 1.1rem;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .table {
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .table thead th {
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+      padding: 1rem;
+    }
+
+    .badge-devices {
+      background: linear-gradient(90deg, #3b82f6, #60a5fa);
+      color: white;
+      padding: 0.6rem 1.25rem;
+      border-radius: 50px;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .speed-card {
+      border-radius: 18px;
+      color: white;
+      padding: 1.75rem;
+      height: 100%;
+      background: linear-gradient(135deg, #3b82f6, #1e40af);
+    }
+
+    .empty-state {
+      padding: 4rem 2rem;
+      text-align: center;
+      color: #64748b;
+    }
+
+    .refresh-info {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      z-index: 1000;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container py-5">
+    <!-- Header -->
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h1 class="page-title mb-1">
+          <i class="fas fa-network-wired me-3"></i>Network Manager
+        </h1>
+        <p class="text-muted mb-0">Real-time network overview</p>
+      </div>
+      <div>
+        <span class="badge-devices fs-6">
+          <i class="fas fa-desktop me-2"></i>
+          {{ devices|length }} Devices Connected
+        </span>
+      </div>
+    </div>
+
+    <!-- Network Info -->
+    <div class="row g-4 mb-5">
+      <div class="col-md-6">
+        <div class="card info-card">
+          <div class="d-flex justify-content-between">
+            <div>
+              <div class="info-label">
+                <i class="fas fa-globe me-2"></i> YOUR IP ADDRESS
+              </div>
+              <div class="info-value">{{ ip|default:'Not Available' }}</div>
+            </div>
+            <div class="info-icon">
+              <i class="fas fa-ip"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card info-card">
+          <div class="d-flex justify-content-between">
+            <div>
+              <div class="info-label">
+                <i class="fas fa-route me-2"></i> DEFAULT GATEWAY
+              </div>
+              <div class="info-value">{{ gateway|default:'Not Available' }}</div>
+            </div>
+            <div class="info-icon">
+              <i class="fas fa-router"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Connected Devices -->
+    <div class="card mb-5">
+      <div class="card-header bg-white border-0 py-4">
+        <h5 class="mb-0 fw-semibold">
+          <i class="fas fa-plug text-primary me-2"></i>
+          Connected Devices
+        </h5>
+      </div>
+      <div class="card-body p-0">
+        {% if unknown_devices %}
+          <div class="alert alert-warning mx-4 mt-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {{ unknown_devices|length }} Unknown Device(s) Detected
+          </div>
+        {% endif %}
+
+        {% if devices %}
+          <!-- Desktop Table -->
+          <div class="table-responsive d-none d-lg-block">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Device</th>
+                  <th>Type</th>
+                  <th>IP Address</th>
+                  <th>MAC Address</th>
+                  <th>Last Seen</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for device in devices %}
+                <tr>
+                  <td>
+                    <i class="fas fa-server text-muted me-2"></i>
+                    <span class="hostname">{{ device.hostname|default:'Unknown Device' }}</span>
+                  </td>
+                  <td>{{ device.device_type|default:'-' }}</td>
+                  <td class="font-monospace">{{ device.ip_address }}</td>
+                  <td class="font-monospace text-muted">{{ device.mac_address }}</td>
+                  <td>{{ device.last_seen|date:'Y-m-d H:i' }}</td>
+                  <td>
+                    <span class="status-dot"></span>
+                    <span class="text-success fw-medium">Online</span>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Mobile Cards -->
+          <div class="device-grid d-lg-none p-4">
+            {% for device in devices %}
+            <div class="device-card">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="hostname">{{ device.hostname|default:'Unknown Device' }}</div>
+                  <small class="text-muted">{{ device.device_type|default:'Device' }}</small>
+                </div>
+                <span class="status-dot"></span>
+              </div>
+              <div class="mt-3">
+                <div class="small text-muted">IP</div>
+                <div class="font-monospace">{{ device.ip_address }}</div>
+              </div>
+              <div class="mt-2">
+                <div class="small text-muted">MAC</div>
+                <div class="font-monospace text-muted">{{ device.mac_address }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <i class="fas fa-wifi fa-3x mb-4 opacity-50"></i>
+            <h5>No devices connected</h5>
+            <p class="mb-0">Your network is quiet right now.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Speed Cards -->
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="speed-card">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-1 opacity-90">Download</h5>
+              <h2 class="mb-0 display-5 fw-bold">{{ download|default:0 }} <small class="fs-5">MB/s</small></h2>
+            </div>
+            <i class="fas fa-arrow-down fa-3x opacity-75"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="speed-card" style="background: linear-gradient(135deg, #10b981, #047857);">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-1 opacity-90">Upload</h5>
+              <h2 class="mb-0 display-5 fw-bold">{{ upload|default:0 }} <small class="fs-5">MB/s</small></h2>
+            </div>
+            <i class="fas fa-arrow-up fa-3x opacity-75"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-5">
+      <small class="text-muted">
+        Last updated: {% now 'Y-m-d H:i:s' %}
+      </small>
+    </div>
+  </div>
+
+  <!-- Auto Refresh -->
+  <div class="refresh-info">
+    <i class="fas fa-sync-alt me-2"></i>
+    Auto-refreshing every 10s
+  </div>
+
+  <script>
+    setInterval(() => location.reload(), 10000);
+
+    // Optional: Pause refresh with Ctrl+Shift+R
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+        clearInterval(window.refreshInterval);
+        document.querySelector('.refresh-info').innerHTML = 
+          `<i class="fas fa-pause me-2"></i>Auto-refresh paused`;
+      }
+    });
+  </script>
+</body>
+</html>
