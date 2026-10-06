@@ -8,7 +8,6 @@ def dashboard(request):
 
     bandwidth = get_bandwidth()
 
-    # Live scan
     scanned_devices = scan_devices()
 
     for d in scanned_devices:
