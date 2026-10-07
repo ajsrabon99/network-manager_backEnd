@@ -39,4 +39,4 @@ def dashboard(request):
         "upload": bandwidth["upload"],
     })
 
-    return render(request, "dashboard.html", context)
+    return render(request, "exmp_frontend.html", context)
